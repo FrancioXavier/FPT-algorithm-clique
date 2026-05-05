@@ -44,6 +44,7 @@ func (g *Graph) EdgeExists(v1, v2 int) bool {
 	return edgeExists
 }
 
+// vertexList have always size k - 1, so O(k²)
 func IsClique(g *Graph, vertexList []int) bool {
 	for i := 0; i < len(vertexList); i++ {
 		for j := i + 1; j < len(vertexList); j++ {
@@ -56,7 +57,7 @@ func IsClique(g *Graph, vertexList []int) bool {
 	return true
 }
 
-// Bounced Search Tree to define the vertex list
+// Bounced Search Tree to define the vertex list => O(∆^k-1 * k²)
 func Combinations(g *Graph, neighbors []int, kMinusOne, init, v int, currentCombination []int, results *[][]int) {
 	if len(*results) > 0 {
 		return
@@ -74,6 +75,8 @@ func Combinations(g *Graph, neighbors []int, kMinusOne, init, v int, currentComb
 		return
 	}
 
+	// Choose -> explore -> remove
+	//
 	for i := init; i < len(neighbors); i++ {
 		currentCombination = append(currentCombination, neighbors[i])
 		Combinations(g, neighbors, kMinusOne, i+1, v, currentCombination, results)
@@ -83,20 +86,21 @@ func Combinations(g *Graph, neighbors []int, kMinusOne, init, v int, currentComb
 
 func FPTClique(g *Graph, k int) string {
 	maxDegree := 0
+
+	// Parameter defined in polynomial time -> O(n)
 	for _, neighbors := range g.list {
 		if len(neighbors) > maxDegree {
 			maxDegree = len(neighbors)
 		}
 	}
 
-	// Using the maxDegree parameter to prune the search space
+	// KERNELIZATION 1: Giving an answer fast with the rule: if k > maxDegree + 1, it's impossible have a CLIQUE in graph with size k 
 	if k > maxDegree+1 {
 		return "NO"
 	}
 
 	for vertex, neighborsMap := range g.list {
-		// if the degree of the current vertex is less than k-1,
-		// it cannot be part of a clique of size k
+		// KERNELIZATION 2: Reduce the instance by removing vertices with a degree less than k-1; these cannot be part of a k-clique.
 		if len(neighborsMap) >= k-1 {
 			var neighborsSlice []int
 			for neighborId := range neighborsMap {
